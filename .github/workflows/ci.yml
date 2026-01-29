@@ -57,6 +57,7 @@ jobs:
         run: |
           python <<EOF
           import xml.etree.ElementTree as ET
+          import os
 
           def rate(path):
               tree = ET.parse(path)
@@ -70,17 +71,11 @@ jobs:
           print(f"main: {main:.2f}%")
           print(f"diff: {diff:+.2f}%")
 
-          with open("result.txt", "w") as f:
-              f.write(f"PR: {pr:.2f}%\nmain: {main:.2f}%\ndiff: {diff:+.2f}%\n")
-
-          print(f"pr={pr:.2f}")
-          print(f"main={main:.2f}")
-          print(f"diff={diff:+.2f}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"pr={pr:.2f}\n")
+              f.write(f"main={main:.2f}\n")
+              f.write(f"diff={diff:+.2f}\n")
           EOF
-
-          echo "pr=$(grep '^pr=' result.txt | cut -d= -f2)" >> $GITHUB_OUTPUT
-          echo "main=$(grep '^main=' result.txt | cut -d= -f2)" >> $GITHUB_OUTPUT
-          echo "diff=$(grep '^diff=' result.txt | cut -d= -f2)" >> $GITHUB_OUTPUT
 
       # ---------- Comment on PR ----------
       - name: Comment coverage on PR
