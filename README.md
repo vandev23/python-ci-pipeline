@@ -1,146 +1,136 @@
-# Python CI Pipeline 🚀
+![CI](https://github.com/vandev23/python-ci-pipeline/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://codecov.io/gh/vandev23/python-ci-pipeline/branch/main/graph/badge.svg)
 
-Educational and hands-on repository to learn **CI/CD with GitHub Actions**, **quality gates using code coverage**, and **infrastructure management with Terraform + Atlantis**, using a **simple but realistic Python project**.
 
-This repository is designed as a **learning lab** and also as a **professional portfolio project**.
+# 🧪 Python CI Pipeline with Coverage
 
----
+This repository demonstrates a **production-ready Python CI pipeline** using **GitHub Actions**, focused on clean code, test coverage, and pull request quality gates.
 
-## 🎯 Project Goals
-
----
-
-- Enforce **mandatory Pull Requests** into `main`
-- Run **automated tests** on every PR
-- Measure **code coverage** and block merges if it decreases
-- Report **PR coverage and delta vs main**
-- Publish coverage reports as artifacts
-- Deploy infrastructure using **Terraform**
-- Use **Atlantis** for `plan`, `apply`, and rollback
-- Learn a complete **CI workflow with GitHub Actions**
+It is designed as a **learning + portfolio project**, showing how modern teams enforce quality before merging to `main`.
 
 ---
 
-## 🧱 Repository Structure
+## 🚀 What This Repository Achieves
+
+- ✅ Pull Requests are **mandatory** to merge into `main`
+- 🧪 Tests are required and executed automatically
+- 📊 Test **coverage is calculated and enforced**
+- 💬 Coverage percentage is **reported directly on PRs**
+- 🔒 Branch protection via **GitHub Rulesets**
+- 📦 Simple, clean Python project structure
+
+---
+
+## 🧱 Project Structure
 
 ```
-python-ci-pipeline/
-├── .github/workflows/      # GitHub Actions (CI)
-├── src/                    # Source code
-├── tests/                  # Unit tests
-├── terraform/              # IaC
-├── .coveragerc             # Coverage
-├── requirements.txt        # Dependencies
-├── pyproject.toml          # Configuration of project
+.
+├── src/
+│   └── calculator.py
+├── tests/
+│   └── test_calculator.py
+├── .github/
+│   └── workflows/
+│       └── python-ci.yml
+├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## 🐍 Python Project
-
-This Python project is intentionally **simple**, but designed to:
-
-- Require tests
-- Include error scenarios
-- Allow clear and measurable coverage
-
-The focus is on the **pipeline**, not on domain complexity.
-
----
-
 ## 🧪 Testing & Coverage
 
-- Testing framework: **pytest**
-- Coverage: **pytest-cov**
+Tests are written using **pytest**, and coverage is measured with **pytest-cov**.
 
 ### Run tests locally
-
-```bash
-pytest
-```
-
-### Run tests with coverage
 
 ```bash
 pytest --cov=src --cov-report=term-missing
 ```
 
-### Generate HTML report
+This will:
+- Run all tests
+- Show **line-by-line coverage** in the terminal
+- Highlight missing lines
 
-```bash
-pytest --cov=src --cov-report=html
+---
+
+## 🤖 Continuous Integration (GitHub Actions)
+
+Every **pull request** and **push to `main`** triggers the CI workflow.
+
+The CI pipeline performs:
+1. Checkout repository
+2. Set up Python environment
+3. Install dependencies
+4. Run tests with coverage
+5. Generate `coverage.xml`
+6. Post coverage percentage as a PR comment
+
+### Example PR Comment
+
+```
+🧪 Test Coverage
+📊 Coverage: 92.45%
 ```
 
-Report is generated at:
+---
 
-```
-htmlcov/index.html
-```
+## 🔒 Branch Protection & Ruleset
+
+The `main` branch is protected using **GitHub Rulesets**:
+
+- ❌ Direct pushes to `main` are blocked
+- ✅ Pull Request required
+- ✅ CI workflow **must pass** before merge
+- ⏳ Merges are blocked until all checks succeed
+
+This simulates a **real production workflow**.
 
 ---
 
-## 🔒 Branch Rules
+## 📊 Coverage Visibility Strategy
 
-The `main` branch is protected:
+Current setup:
+- ✔️ Coverage shown in CI logs
+- ✔️ Coverage reported in PR comments
 
-- ❌ No direct pushes allowed
-- ✅ All changes must go through Pull Requests
-- ✅ Tests and coverage must pass
-- ✅ CI must be green
-
----
-
-## ⚙️ CI with GitHub Actions
-
-CI pipeline:
-
-1. Runs on every PR and push to `main`
-2. Installs dependencies
-3. Runs tests
-4. Calculates coverage
-5. Publishes reports as artifacts
-6. (Coming soon) compares coverage vs `main`
+Planned enhancements:
+- 📈 Upload HTML coverage report as CI artifact
+- 🧷 Optional link from README to latest coverage report
 
 ---
 
-## 🏗️ Infrastructure
+## 🛠️ Tech Stack
 
-This repository includes infrastructure code to learn:
-
-- `terraform plan`
-- `terraform apply`
-- PR-driven workflow with Atlantis
-- Rollbacks via state changes
-
-The goal is **not the infrastructure itself**, but mastering a **real-world workflow**.
+- Python 3.9
+- pytest
+- pytest-cov
+- GitHub Actions
+- GitHub Rulesets
 
 ---
 
-## 📈 Roadmap
+## 🎯 Why This Project Matters
 
-- [x] Base Python project
-- [x] Unit tests
-- [ ] Basic CI
-- [ ] Required coverage
-- [ ] Coverage diff per PR
-- [ ] PR comments
-- [ ] Basic Terraform
-- [ ] Atlantis integration
-- [ ] Infrastructure rollback
+This repository demonstrates:
+- Clean CI/CD fundamentals
+- Quality gates enforced at PR level
+- Test-driven mindset
+- Real-world DevOps practices
+
+Ideal as a **portfolio project** for backend, platform, or DevOps roles.
 
 ---
 
-## 👩‍💻 Author
+## ⏭️ Next Steps
 
-**Vanessa Pacheco**  
-Software Engineer  
-Santiago, Chile  
-
-🔗 [LinkedIn](https://www.linkedin.com/in/vanessa-pacheco-81b02426/)  
-💻 [GitHub](https://github.com/vandev23)
+- Add Terraform + Atlantis workflow
+- Enforce minimum coverage threshold
+- Add CI badges
+- Add rollback strategy documentation
 
 ---
-  
-> This project reflects real CI/CD practices used by modern engineering teams.
+
+✨ Built with a focus on learning, quality, and real-world engineering practices.
 
