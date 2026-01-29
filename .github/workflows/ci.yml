@@ -28,35 +28,98 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests with coverage
+      # -------- PR coverage --------
+      - name: Run tests with coverage (PR)
         run: |
-            PYTHONPATH=. pytest \
-            --cov=src \
-            --cov-report=xml \
-            --cov-report=term
+          PYTHONPATH=. pytest \
+            --cov=src --cov-report=xml --cov-report=term-missing
+          mv coverage.xml coverage-pr.xml
 
-      - name: Get coverage percentage
-        id: coverage
+      # -------- Main coverage --------
+      - name: Checkout main
         run: |
-            coverage=$(python - <<EOF
-            import xml.etree.ElementTree as ET
-            tree = ET.parse("coverage.xml")
-            root = tree.getroot()
-            rate = float(root.attrib["line-rate"]) * 100
-            print(f"{rate:.2f}")
-            EOF
-            )
-                echo "coverage=$coverage" >> $GITHUB_OUTPUT
-                
-      - name: Comment coverage on PR
+          git fetch origin main
+          git checkout origin/main
+
+      - name: Run tests with coverage (main)
+        run: |
+          PYTHONPATH=. pytest \
+            --cov=src --cov-report=xml --cov-report=term-missing
+          mv coverage.xml coverage-main.xml
+
+      # -------- Compare coverage --------
+      - name: Compare coverage
+        id: compare
+        run: |
+          python <<EOF
+          import xml.etree.ElementTree as ET
+
+          def get_rate(path):
+              tree = ET.parse(path)
+              return float(tree.getroot().attrib["line-rate"]) * 100
+
+          pr = get_rate("coverage-pr.xml")
+          main = get_rate("coverage-main.xml")
+          diff = pr - main
+
+          print(f"PR: {pr:.2f}%")
+          print(f"main: {main:.2f}%")
+          print(f"diff: {diff:+.2f}%")
+
+          with open("result.txt", "w") as f:
+              f.write(f"PR: {pr:.2f}%\n")
+              f.write(f"main: {main:.2f}%\n")
+              f.write(f"diff: {diff:+.2f}%\n")
+
+          print(f"pr={pr:.2f}")
+          print(f"main={main:.2f}")
+          print(f"diff={diff:+.2f}")
+
+          EOF
+
+          echo "pr=$(python - <<EOF
+          import xml.etree.ElementTree as ET
+          print(f'{float(ET.parse("coverage-pr.xml").getroot().attrib["line-rate"]) * 100:.2f}')
+          EOF
+          )" >> $GITHUB_OUTPUT
+
+          echo "main=$(python - <<EOF
+          import xml.etree.ElementTree as ET
+          print(f'{float(ET.parse("coverage-main.xml").getroot().attrib["line-rate"]) * 100:.2f}')
+          EOF
+          )" >> $GITHUB_OUTPUT
+
+          echo "diff=$(python - <<EOF
+          import xml.etree.ElementTree as ET
+          pr = float(ET.parse("coverage-pr.xml").getroot().attrib["line-rate"]) * 100
+          main = float(ET.parse("coverage-main.xml").getroot().attrib["line-rate"]) * 100
+          print(f'{pr - main:+.2f}')
+          EOF
+          )" >> $GITHUB_OUTPUT
+
+      # -------- Comment on PR --------
+      - name: Comment coverage diff on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
-            script: |
-                const coverage = "${{ steps.coverage.outputs.coverage }}"
-                github.rest.issues.createComment({
-                    issue_number: context.issue.number,
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    body: `🧪 **Test Coverage**\n\n📊 Coverage: **${coverage}%**`
-                })
+          script: |
+            const pr = "${{ steps.compare.outputs.pr }}"
+            const main = "${{ steps.compare.outputs.main }}"
+            const diff = "${{ steps.compare.outputs.diff }}"
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🧪 **Test Coverage**\n\nPR: **${pr}%**\nmain: **${main}%**\nΔ: **${diff}%**`
+            })
+
+      # -------- Fail if coverage decreases --------
+      - name: Fail if coverage decreased
+        run: |
+          diff=${{ steps.compare.outputs.diff }}
+          python - <<EOF
+          diff = float("$diff")
+          if diff < 0:
+              raise SystemExit("❌ Coverage decreased")
+          EOF
