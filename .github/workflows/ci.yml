@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -26,4 +30,33 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          PYTHONPATH=. pytest --cov=src --cov-report=term-missing
+            PYTHONPATH=. pytest \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term
+
+      - name: Get coverage percentage
+        id: coverage
+        run: |
+            coverage=$(python - <<EOF
+            import xml.etree.ElementTree as ET
+            tree = ET.parse("coverage.xml")
+            root = tree.getroot()
+            rate = float(root.attrib["line-rate"]) * 100
+            print(f"{rate:.2f}")
+            EOF
+            )
+                echo "coverage=$coverage" >> $GITHUB_OUTPUT
+                
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+            script: |
+                const coverage = "${{ steps.coverage.outputs.coverage }}"
+                github.rest.issues.createComment({
+                    issue_number: context.issue.number,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    body: `🧪 **Test Coverage**\n\n📊 Coverage: **${coverage}%**`
+                })
