@@ -11,7 +11,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  test:
+  ci:
+    name: Python CI
     runs-on: ubuntu-latest
 
     steps:
