@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   test:
+    name: Tests & Coverage
     runs-on: ubuntu-latest
 
     steps:
