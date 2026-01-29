@@ -11,8 +11,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  test:
-    name: Tests & Coverage
+  ci:
+    name: Python CI
     runs-on: ubuntu-latest
 
     steps:
