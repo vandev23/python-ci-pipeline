@@ -100,7 +100,7 @@ jobs:
       - name: Deploy HTML coverage
         uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GH_PAGES_PAT }} 
+          github_token: ${{ secrets.GH_PAGES_PAT }}  # <- PAT con permisos de repo:write
           publish_dir: ./htmlcov-pr
           destination_dir: pr-${{ github.event.pull_request.number }}
           allow_empty_commit: true
@@ -117,7 +117,7 @@ jobs:
             const pr = "${{ steps.coverage.outputs.pr }}"
             const main = "${{ steps.coverage.outputs.main }}"
             const diff = "${{ steps.coverage.outputs.diff }}"
-            const url = `https://vandev23.github.io/nessa-dev/pr-${context.issue.number}/index.html`
+            const url = `https://vandev23.github.io/python-ci-pipeline/pr-${context.issue.number}/index.html`
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
