@@ -100,9 +100,10 @@ jobs:
       - name: Deploy HTML coverage
         uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GH_PAGES_PAT }} 
           publish_dir: ./htmlcov-pr
           destination_dir: pr-${{ github.event.pull_request.number }}
+          allow_empty_commit: true
           user_name: github-actions[bot]
           user_email: github-actions[bot]@users.noreply.github.com
           commit_message: "Add HTML coverage for PR #${{ github.event.pull_request.number }}"
