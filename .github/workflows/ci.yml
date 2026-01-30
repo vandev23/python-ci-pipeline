@@ -44,9 +44,9 @@ jobs:
             --cov-report=term-missing
           mv coverage.xml coverage-pr.xml
           mv htmlcov htmlcov-pr
-          ls -R htmlcov-pr  # debug
+          ls -R htmlcov-pr  # <- debug: asegurarse que existen los archivos
 
-      # -------- Run tests on main --------
+      # -------- Run tests with coverage (main) --------
       - name: Run tests on main branch
         run: |
           git fetch origin main
@@ -98,10 +98,10 @@ jobs:
           fail_ci_if_error: true
 
       # -------- Deploy HTML coverage to gh-pages --------
-      - name: Deploy HTML coverage to gh-pages
+      - name: Deploy HTML coverage
         uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}   # <- usa GITHUB_TOKEN
+          github_token: ${{ secrets.GH_PAGES_PAT }}  # <- PAT con permisos de push
           publish_dir: ./htmlcov-pr
           destination_dir: pr-${{ github.event.pull_request.number }}
           allow_empty_commit: true
