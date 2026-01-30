@@ -16,22 +16,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout PR code
+      # -------- Checkout PR code --------
+      - name: Checkout PR
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # -------- Set up Python --------
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.9"
 
+      # -------- Install dependencies --------
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ---------- PR coverage ----------
+      # -------- Run tests with coverage (PR) --------
       - name: Run tests with coverage (PR)
         run: |
           PYTHONPATH=. pytest \
@@ -42,10 +45,11 @@ jobs:
           mv coverage.xml coverage-pr.xml
           mv htmlcov htmlcov-pr
 
-      # ---------- Main coverage ----------
-      - name: Get main branch coverage
+      # -------- Run tests with coverage (main) --------
+      - name: Run tests on main branch
         run: |
-          git checkout main
+          git fetch origin main
+          git checkout origin/main
           PYTHONPATH=. pytest \
             --cov=src \
             --cov-report=xml \
@@ -53,7 +57,7 @@ jobs:
           mv coverage.xml coverage-main.xml
           git checkout -
 
-      # ---------- Compare coverage ----------
+      # -------- Compare coverage --------
       - name: Compare coverage
         id: coverage
         run: |
@@ -79,25 +83,7 @@ jobs:
               f.write(f"diff={diff:+.2f}\n")
           EOF
 
-      # ---------- Comment on PR ----------
-      - name: Comment coverage on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const pr = "${{ steps.coverage.outputs.pr }}"
-            const main = "${{ steps.coverage.outputs.main }}"
-            const diff = "${{ steps.coverage.outputs.diff }}"
-            const url = `https://codecov.io/gh/${context.repo.owner}/${context.repo.repo}/pull/${context.issue.number}`
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `🧪 **Test Coverage**\n\nPR: **${pr}%**\nmain: **${main}%**\nΔ: **${diff}%**\n\n🔗 [View full report on Codecov](${url})`
-            })
-
-      # ---------- Fail if coverage decreases ----------
+      # -------- Fail if coverage decreased --------
       - name: Fail if coverage decreased
         run: |
           python - <<EOF
@@ -106,16 +92,48 @@ jobs:
               raise SystemExit("❌ Coverage decreased")
           EOF
 
-      # ---------- Upload PR coverage ----------
-      - name: Upload PR coverage to Codecov
+      # -------- Upload PR coverage to Codecov --------
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           files: coverage-pr.xml
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
 
-      - name: Upload HTML coverage report
-        uses: actions/upload-artifact@v4
+      # -------- Deploy HTML coverage to gh-pages --------
+      - name: Deploy HTML coverage to gh-pages
+        uses: actions/checkout@v4
         with:
-          name: coverage-html-pr
-          path: htmlcov-pr
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Copy HTML coverage
+        run: |
+          mkdir -p pr-${{ github.event.pull_request.number }}
+          cp -r ../htmlcov-pr/* pr-${{ github.event.pull_request.number }}/
+
+      - name: Commit and push HTML coverage
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pr-${{ github.event.pull_request.number }}
+          git commit -m "Add HTML coverage for PR #${{ github.event.pull_request.number }}" || echo "Nothing to commit"
+          git push origin gh-pages
+
+      # -------- Comment coverage + HTML link on PR --------
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = "${{ steps.coverage.outputs.pr }}"
+            const main = "${{ steps.coverage.outputs.main }}"
+            const diff = "${{ steps.coverage.outputs.diff }}"
+            const url = `https://vandev23.github.io/nessa-dev/pr-${context.issue.number}/index.html`
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🧪 **Test Coverage**\n\nPR: **${pr}%**\nmain: **${main}%**\nΔ: **${diff}%**\n\n🔗 [View full HTML report here](${url})`
+            })
