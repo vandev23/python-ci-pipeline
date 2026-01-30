@@ -44,9 +44,9 @@ jobs:
             --cov-report=term-missing
           mv coverage.xml coverage-pr.xml
           mv htmlcov htmlcov-pr
-          ls -R htmlcov-pr  # <- debug: asegurarse que existen los archivos
+          ls -R htmlcov-pr  # debug
 
-      # -------- Run tests with coverage (main) --------
+      # -------- Run tests on main --------
       - name: Run tests on main branch
         run: |
           git fetch origin main
@@ -74,11 +74,6 @@ jobs:
           main = rate("coverage-main.xml")
           diff = pr - main
 
-          print(f"PR: {pr:.2f}%")
-          print(f"main: {main:.2f}%")
-          print(f"diff: {diff:+.2f}%")
-
-          # Export outputs
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"pr={pr:.2f}\n")
               f.write(f"main={main:.2f}\n")
@@ -103,10 +98,10 @@ jobs:
           fail_ci_if_error: true
 
       # -------- Deploy HTML coverage to gh-pages --------
-      - name: Deploy HTML coverage
+      - name: Deploy HTML coverage to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GH_PAGES_PAT }}  # <- PAT con permisos de repo
+          github_token: ${{ secrets.GITHUB_TOKEN }}   # <- usa GITHUB_TOKEN
           publish_dir: ./htmlcov-pr
           destination_dir: pr-${{ github.event.pull_request.number }}
           allow_empty_commit: true
