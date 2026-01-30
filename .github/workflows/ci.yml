@@ -7,7 +7,7 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 
 jobs:
@@ -40,11 +40,8 @@ jobs:
           PYTHONPATH=. pytest \
             --cov=src \
             --cov-report=xml \
-            --cov-report=html \
             --cov-report=term-missing
           mv coverage.xml coverage-pr.xml
-          mv htmlcov htmlcov-pr
-          ls -R htmlcov-pr  # <- debug: asegurarse que existen los archivos
 
       # -------- Run tests with coverage (main) --------
       - name: Run tests on main branch
@@ -97,19 +94,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
 
-      # -------- Deploy HTML coverage to gh-pages --------
-      - name: Deploy HTML coverage
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GH_PAGES_PAT }}  # <- PAT con permisos de push
-          publish_dir: ./htmlcov-pr
-          destination_dir: pr-${{ github.event.pull_request.number }}
-          allow_empty_commit: true
-          user_name: github-actions[bot]
-          user_email: github-actions[bot]@users.noreply.github.com
-          commit_message: "Add HTML coverage for PR #${{ github.event.pull_request.number }}"
-
-      # -------- Comment coverage + HTML link on PR --------
+      # -------- Comment coverage on PR --------
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -118,11 +103,10 @@ jobs:
             const pr = "${{ steps.coverage.outputs.pr }}"
             const main = "${{ steps.coverage.outputs.main }}"
             const diff = "${{ steps.coverage.outputs.diff }}"
-            const url = `https://vandev23.github.io/python-ci-pipeline/pr-${context.issue.number}/index.html`
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🧪 **Test Coverage**\n\nPR: **${pr}%**\nmain: **${main}%**\nΔ: **${diff}%**\n\n🔗 [View full HTML report here](${url})`
+              body: `🧪 **Test Coverage**\n\nPR: **${pr}%**\nmain: **${main}%**\nΔ: **${diff}%**`
             })
