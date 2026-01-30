@@ -94,7 +94,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
 
-      # -------- Comment coverage on PR (visual) --------
+      # -------- Comment coverage on PR (colorful bars) --------
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -104,16 +104,29 @@ jobs:
             const main = parseFloat("${{ steps.coverage.outputs.main }}");
             const diff = parseFloat("${{ steps.coverage.outputs.diff }}");
 
+            // Función para crear barra de cobertura con colores
+            function coverageBar(percentage) {
+                const blocks = 20;
+                const filled = Math.round((percentage / 100) * blocks);
+                const empty = blocks - filled;
+
+                let bar = "";
+                for (let i = 0; i < filled; i++) {
+                    if (percentage >= 90) bar += "🟩";      // verde
+                    else if (percentage >= 75) bar += "🟨"; // amarillo
+                    else bar += "🟥";                       // rojo
+                }
+                bar += "⬜".repeat(empty);
+                return bar;
+            }
+
+            const prBar = coverageBar(pr);
+            const mainBar = coverageBar(main);
+
             // Emoji según delta
             let emoji = "✅";
             if (diff < 0 && diff >= -1) { emoji = "⚠️"; }
             if (diff < -1) { emoji = "❌"; }
-
-            // Mini barra visual 20 bloques
-            const prBlocks = Math.round(pr / 5);
-            const mainBlocks = Math.round(main / 5);
-            const prBar = "█".repeat(prBlocks) + "░".repeat(20 - prBlocks);
-            const mainBar = "█".repeat(mainBlocks) + "░".repeat(20 - mainBlocks);
 
             // Link a Codecov PR
             const url = `https://codecov.io/gh/${context.repo.owner}/${context.repo.repo}/pull/${context.issue.number}`;
@@ -126,9 +139,7 @@ jobs:
                     `PR: ${pr.toFixed(2)}% ${emoji}\n` +
                     `main: ${main.toFixed(2)}%\n` +
                     `Δ: ${diff >= 0 ? "+" : ""}${diff.toFixed(2)}% ${emoji}\n\n` +
-                    `**PR Coverage Visual:**\n` +
-                    `${prBar} ${pr.toFixed(2)}%\n` +
-                    `**Main Coverage Visual:**\n` +
-                    `${mainBar} ${main.toFixed(2)}%\n\n` +
+                    `**PR Coverage Visual:**\n${prBar} ${pr.toFixed(2)}%\n` +
+                    `**Main Coverage Visual:**\n${mainBar} ${main.toFixed(2)}%\n\n` +
                     `🔗 [View full HTML report on Codecov](${url})`
             });
